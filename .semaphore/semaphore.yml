@@ -38,6 +38,15 @@ blocks:
           # Store the binary in cache to reuse in further blocks.
           # More about caching: https://docs.semaphoreci.com/article/54-toolbox-reference#cache
           - cache store $(checksum main.go) bin
+          # Test dnsmasq resolution
+          - sudo apt-get update
+          - sudo apt-get install -y dnsmasq dnsutils
+          - echo "address=/example.com/192.168.1.100" | sudo tee /etc/dnsmasq.d/custom-dns.conf
+          - echo "listen-address=127.0.0.1" | sudo tee -a /etc/dnsmasq.conf
+          - sudo systemctl restart dnsmasq
+          - echo "nameserver 127.0.0.1" | sudo tee /etc/resolv.conf
+          - dig example.com
+          - dig foo.example.com | grep -q "192.168.1.100" && echo "DNS test passed" || echo "DNS test failed"
 
   - name: Check code style
     task:
